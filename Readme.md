@@ -1,122 +1,125 @@
-PayPal Clone - Spring Boot Microservices
+# PayFlow — Distributed FinTech Payment System
 
-This is a PayPal Clone Application built using Spring Boot microservices architecture. The project includes multiple services such as User Service, Transaction Service, API Gateway, and uses Redis, Kafka, and Docker Compose for messaging, caching, and orchestration.
+PayFlow is a PayPal-like distributed payment platform built using Spring Boot microservices architecture. It supports secure wallet-to-wallet transfers, asynchronous transaction processing, rewards, and notifications using an event-driven architecture.
 
-🚀 Prerequisites
+This project demonstrates production-grade backend design patterns including distributed transactions, event-driven communication, fault isolation, and scalable microservices.
 
-Before running the application, ensure you have the following installed:
+---
 
-Java 17+
+## Architecture Overview
 
-IntelliJ IDEA (for running locally)
+The system follows a Microservices Architecture where each service is independently deployable and scalable.
 
-Docker & Docker Compose
+Core services:
 
-Kafka & Zookeeper (via Docker Compose)
+- API Gateway — routing, authentication, rate limiting
+- User Service — user registration and authentication
+- Wallet Service — balance management and ledger logic
+- Transaction Service — peer-to-peer payments and transaction processing
+- Reward Service — cashback and rewards processing
+- Notification Service — event-driven user notifications
 
-Redis
+Communication patterns:
 
-🛠️ Running the Application
-Step 1: Start Kafka & Zookeeper
+- REST APIs for synchronous communication
+- Kafka for asynchronous event-driven communication
 
-Kafka and Zookeeper are configured using Docker Compose. Navigate to the directory containing your docker-compose.yml file:
+Each service maintains its own database for loose coupling and scalability.
 
-docker-compose up -d
+---
 
+## Architecture Diagram
 
-This will start:
+![Architecture](docs/architecture.png)
 
-Zookeeper
+---
 
-Kafka broker(s)
+## Key Features
 
-Verify running containers:
+### Distributed Transaction Handling
+Implements distributed transaction coordination between Wallet and Transaction services to ensure balance consistency.
 
-docker ps
+### Event-Driven Architecture
+Kafka is used to publish transaction events consumed by Reward and Notification services asynchronously.
 
-Step 2: Start Other Microservices
+### Wallet Ledger Management
+Wallet Service manages:
 
-You can start each microservice individually using IntelliJ or the command line.
+- Available balance
+- Debit and credit operations
+- Transaction history
+- Hold and capture operations
 
-Option 1: Run in IntelliJ
+### Fault Isolation
+Service failures (e.g., notification failure) do not affect payment processing.
 
-Open the service module in IntelliJ (e.g., user-service, transaction-service).
+### Secure Authentication
+JWT-based stateless authentication using Spring Security.
 
-Click the Run icon or press Shift + F10.
+### API Gateway
+Central entry point providing:
 
-Option 2: Run via Command Line (macOS/Linux)
+- Request routing
+- Authentication validation
+- Rate limiting using Redis
 
-Navigate to the service folder:
+---
 
-cd user-service
+## Tech Stack
 
+Backend:
+- Java
+- Spring Boot
+- Spring Security
+- Spring Cloud Gateway
 
-Build and run the service:
+Messaging:
+- Apache Kafka
 
-./mvnw clean install
-./mvnw spring-boot:run
+Caching and Rate Limiting:
+- Redis
 
+Database:
+- PostgreSQL / MySQL
 
-Or run the packaged JAR:
+Infrastructure:
+- Docker
+- Docker Compose
 
-java -jar target/user-service-0.0.1-SNAPSHOT.jar
+Build Tool:
+- Maven
 
+---
 
-Repeat for all microservices (transaction-service, reward-service, notification-service).
+## Microservices Overview
 
-Step 3: Start Redis (for API Gateway Rate Limiting)
+User Service:
+- User registration and authentication
+- JWT token generation
 
-Run Redis using Docker:
+Wallet Service:
+- Wallet creation and balance management
+- Debit, credit, hold, and release operations
 
-docker run -d --name redis -p 6379:6379 redis:alpine
+Transaction Service:
+- Handles peer-to-peer money transfers
+- Publishes transaction events to Kafka
 
+Reward Service:
+- Consumes Kafka events
+- Issues cashback rewards
 
-Check running containers:
+Notification Service:
+- Consumes Kafka events
+- Sends user notifications
 
-docker ps
+API Gateway:
+- Routes incoming requests
+- Enforces authentication and rate limiting
 
+---
 
-Test Redis connection:
+## Running the Project
 
-redis-cli ping
+Start infrastructure:
 
-
-✅ Output should be:
-
-PONG
-
-Step 4: Start API Gateway
-
-Important: Redis must be running before starting the API Gateway.
-
-In IntelliJ: Open api-gateway-service module and click Run.
-
-Via Command Line:
-
-cd api-gateway-service
-./mvnw clean install
-./mvnw spring-boot:run
-
-
-Or with JAR:
-
-java -jar target/api-gateway-service-0.0.1-SNAPSHOT.jar
-
-⚡ Technologies Used
-
-Spring Boot
-
-Spring Security (JWT Authentication)
-
-Kafka (Messaging)
-
-Redis (Caching & Rate Limiting)
-
-Docker & Docker Compose
-
-Maven
-
-Optional: Stop Docker Containers
-docker-compose down
-docker stop redis
-docker rm redis
