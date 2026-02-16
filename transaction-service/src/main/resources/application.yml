@@ -1,0 +1,46 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: transaction-service
+
+  datasource:
+    url: jdbc:postgresql://postgres-transaction:5432/transactiondb
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: kafka:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    template:
+      default-topic: transaction-events
+
+  cloud:
+    compatibility-verifier:
+      enabled: false
+
+logging:
+  level:
+    com.paypal.transaction_service: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.springframework.kafka: DEBUG
+
+# Custom application properties
+app:
+  kafka:
+    topics:
+      transaction-events: transaction-events
+      wallet-updates: wallet-updates
