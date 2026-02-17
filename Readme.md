@@ -162,11 +162,11 @@ cd user-service\
 ./mvnw spring-boot:run
 
 Repeat for other services.
-wallet-service
-transaction-service
-reward-service
-notification-service
-api-gateway
+wallet-service\
+transaction-service\
+reward-service\
+notification-service\
+api-gateway\
 
 Access API Gateway
 
