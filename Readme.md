@@ -92,48 +92,48 @@ Gateway-->>Client: Transaction Complete
 
 ## API Gateway
 
--   JWT authentication and validation\
--   Request routing to services\
+-   JWT authentication and validation
+-   Request routing to services
 -   Redis-based rate limiting
 
 ## User Service
 
--   User registration and login\
--   JWT token generation\
+-   User registration and login
+-   JWT token generation
 -   Creates wallet via Wallet Service
 
 ## Wallet Service
 
--   Wallet creation and balance management\
--   Credit, debit, hold, capture, and release operations\
+-   Wallet creation and balance management
+-   Credit, debit, hold, capture, and release operations
 -   Uses pessimistic locking to prevent double spending
 
 ## Transaction Service
 
--   Orchestrates distributed transactions using Saga pattern\
--   Coordinates wallet hold, capture, and credit\
+-   Orchestrates distributed transactions using Saga pattern
+-   Coordinates wallet hold, capture, and credit
 -   Publishes Kafka events after successful transactions
 
 ## Reward Service
 
--   Kafka consumer for transaction events\
--   Calculates and stores reward points\
+-   Kafka consumer for transaction events
+-   Calculates and stores reward points
 -   Implements idempotency to prevent duplicate rewards
 
 ## Notification Service
 
--   Kafka consumer for transaction events\
--   Generates and stores user notifications\
+-   Kafka consumer for transaction events
+-   Generates and stores user notifications
 -   Fully asynchronous and decoupled
 
 ------------------------------------------------------------------------
 
 # Technology Stack
 
-Backend: Java 17, Spring Boot, Spring Security, Spring Cloud Gateway\
-Database: PostgreSQL\
-Messaging: Apache Kafka\
-Caching: Redis\
+Backend: Java 17, Spring Boot, Spring Security, Spring Cloud Gateway
+Database: PostgreSQL
+Messaging: Apache Kafka
+Caching: Redis
 Containerization: Docker, Docker Compose
 
 ------------------------------------------------------------------------
@@ -174,8 +174,8 @@ Access API Gateway
 
 # Author
 
-Anirban Rudra\
-Software Engineer - Java Backend\
+Anirban Rudra
+Software Engineer - Java Backend
 SAP Fioneer
 
 LinkedIn: https://www.linkedin.com/in/anirban-rudra45/
