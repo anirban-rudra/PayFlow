@@ -1,35 +1,44 @@
-PayFlow - Distributed FinTech Payment Platform
+# PayFlow --- Distributed FinTech Payment Platform
 
-PayFlow is a distributed payment system built using Spring Boot microservices, Kafka, Redis, and PostgreSQL, enabling secure wallet-to-wallet money transfers. It uses the Saga pattern for distributed transaction consistency and an event-driven architecture for asynchronous reward and notification processing.
+PayFlow is a distributed payment system built using Spring Boot
+microservices, Kafka, Redis, and PostgreSQL, enabling secure
+wallet-to-wallet money transfers. It uses the Saga pattern for
+distributed transaction consistency and an event-driven architecture for
+asynchronous reward and notification processing.
 
-This project demonstrates real-world backend design patterns used in modern fintech systems like PayPal and Stripe.
+This project demonstrates real-world backend design patterns used in
+modern fintech systems like PayPal and Stripe.
 
-Architecture Overview
+------------------------------------------------------------------------
+
+# Architecture Overview
 
 PayFlow follows a Microservices Architecture, where each service:
 
-is independently deployable
+-   is independently deployable\
+-   owns its own database\
+-   communicates via REST (synchronous) and Kafka (asynchronous)\
+-   ensures scalability, fault isolation, and reliability
 
-owns its own database
+Core Flow:
 
-communicates via REST (synchronous) and Kafka (asynchronous)
+Client\
+↓\
+API Gateway (JWT auth, rate limiting)\
+↓\
+Transaction Service (Saga orchestrator)\
+↓\
+Wallet Service (Hold → Capture → Credit)\
+↓\
+Kafka Event Published\
+├── Reward Service consumes event\
+└── Notification Service consumes event
 
-ensures scalability, fault isolation, and reliability
+------------------------------------------------------------------------
 
-Core Flow
-Client
-  ↓
-API Gateway (JWT auth, rate limiting)
-  ↓
-Transaction Service (Saga orchestrator)
-  ↓
-Wallet Service (Hold → Capture → Credit)
-  ↓
-Kafka Event Published
-  ├── Reward Service consumes event
-  └── Notification Service consumes event
+# Sequence Diagram
 
-Sequence Diagram
+``` mermaid
 sequenceDiagram
 
 actor Client
@@ -75,150 +84,84 @@ Notify->>NotifyDB: Save notification
 
 Txn-->>Gateway: Return SUCCESS
 Gateway-->>Client: Transaction Complete
+```
 
-Microservices
-API Gateway
+------------------------------------------------------------------------
 
-JWT authentication and validation
+# Microservices
 
-Request routing to services
+## API Gateway
 
-Redis-based rate limiting
+-   JWT authentication and validation\
+-   Request routing to services\
+-   Redis-based rate limiting
 
-User Service
+## User Service
 
-User registration and login
+-   User registration and login\
+-   JWT token generation\
+-   Creates wallet via Wallet Service
 
-JWT token generation
+## Wallet Service
 
-Creates wallet via Wallet Service
+-   Wallet creation and balance management\
+-   Credit, debit, hold, capture, and release operations\
+-   Uses pessimistic locking to prevent double spending
 
-Wallet Service
+## Transaction Service
 
-Wallet creation and balance management
+-   Orchestrates distributed transactions using Saga pattern\
+-   Coordinates wallet hold, capture, and credit\
+-   Publishes Kafka events after successful transactions
 
-Credit, debit, hold, capture, and release operations
+## Reward Service
 
-Uses pessimistic locking to prevent double spending
+-   Kafka consumer for transaction events\
+-   Calculates and stores reward points\
+-   Implements idempotency to prevent duplicate rewards
 
-Transaction Service
+## Notification Service
 
-Orchestrates distributed transactions using Saga pattern
+-   Kafka consumer for transaction events\
+-   Generates and stores user notifications\
+-   Fully asynchronous and decoupled
 
-Coordinates wallet hold, capture, and credit
+------------------------------------------------------------------------
 
-Publishes Kafka events after successful transactions
+# Technology Stack
 
-Reward Service
+Backend: Java 17, Spring Boot, Spring Security, Spring Cloud Gateway\
+Database: PostgreSQL\
+Messaging: Apache Kafka\
+Caching: Redis\
+Containerization: Docker, Docker Compose
 
-Kafka consumer for transaction events
+------------------------------------------------------------------------
 
-Calculates and stores reward points
+# Getting Started
 
-Implements idempotency to prevent duplicate rewards
+Prerequisites:
 
-Notification Service
+-   Java 17+
+-   Docker
+-   Docker Compose
+-   Maven
 
-Kafka consumer for transaction events
+Clone:
 
-Generates and stores user notifications
-
-Fully asynchronous and decoupled
-
-Key Design Patterns
-
-Microservices Architecture
-
-Saga Pattern (Orchestration + Compensation)
-
-Event-Driven Architecture using Kafka
-
-JWT Stateless Authentication
-
-Idempotent Event Processing
-
-Pessimistic Locking for concurrency control
-
-Technology Stack
-Backend
-
-Java 17
-
-Spring Boot
-
-Spring Security
-
-Spring Cloud Gateway
-
-Database
-
-PostgreSQL
-
-Messaging
-
-Apache Kafka
-
-Caching & Rate Limiting
-
-Redis
-
-Containerization
-
-Docker
-
-Docker Compose
-
-Distributed Transaction Flow
-
-Client sends transaction request
-
-Gateway validates JWT
-
-Transaction Service creates PENDING transaction
-
-Wallet Service places HOLD on sender funds
-
-Wallet Service CAPTURES hold (debit sender)
-
-Wallet Service CREDITS receiver
-
-Transaction marked SUCCESS
-
-Kafka event published
-
-Reward Service and Notification Service process event asynchronously
-
-Getting Started
-Prerequisites
-
-Java 17+
-
-Docker
-
-Docker Compose
-
-Maven
-
-Clone Repository
-git clone https://github.com/anirban-rudra/PayFlow.git
+git clone https://github.com/anirban-rudra/PayFlow.git\
 cd PayFlow
 
-Start Infrastructure
+Start infrastructure:
+
 docker-compose up -d
 
+Start services:
 
-Starts Kafka, Redis, and PostgreSQL.
-
-Start Services
-
-Run each service:
-
-cd user-service
+cd user-service\
 ./mvnw spring-boot:run
 
-
-Repeat for:
-
+Repeat for other services.
 wallet-service
 transaction-service
 reward-service
@@ -226,27 +169,13 @@ notification-service
 api-gateway
 
 Access API Gateway
-http://localhost:8080
 
-Key Engineering Highlights
+------------------------------------------------------------------------
 
-Distributed transaction management using Saga pattern
+# Author
 
-Event-driven architecture using Kafka
-
-Secure authentication using JWT
-
-Idempotent event processing
-
-Concurrency control using pessimistic locking
-
-Independent databases per service
-
-Author
-
-Anirban Rudra
-Software Engineer - Java Backend
+Anirban Rudra\
+Software Engineer - Java Backend\
 SAP Fioneer
 
-LinkedIn:
-[https://github.com/anirban-rudra](https://www.linkedin.com/in/anirban-rudra45/)
+LinkedIn: https://www.linkedin.com/in/anirban-rudra45/
