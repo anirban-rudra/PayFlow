@@ -87,54 +87,105 @@ Gateway-->>Client: Transaction Complete
 ```
 
 ------------------------------------------------------------------------
-
 # Microservices
 
 ## API Gateway
 
--   JWT authentication and validation
--   Request routing to services
--   Redis-based rate limiting
+- JWT authentication and validation
+- Request routing to microservices
+- Redis-based rate limiting to prevent abuse
+- Stateless security enforcement using Spring Cloud Gateway
 
 ## User Service
 
--   User registration and login
--   JWT token generation
--   Creates wallet via Wallet Service
+- Handles user registration and login
+- Generates JWT tokens for authentication
+- Creates wallet automatically via Wallet Service
+- Ensures secure user identity management
 
 ## Wallet Service
 
--   Wallet creation and balance management
--   Credit, debit, hold, capture, and release operations
--   Uses pessimistic locking to prevent double spending
+- Manages wallet creation and balance lifecycle
+- Supports credit, debit, hold, capture, and release operations
+- Uses pessimistic locking to prevent race conditions and double spending
+- Ensures ACID-compliant financial transactions
 
 ## Transaction Service
 
--   Orchestrates distributed transactions using Saga pattern
--   Coordinates wallet hold, capture, and credit
--   Publishes Kafka events after successful transactions
+- Acts as Saga orchestrator for distributed transactions
+- Coordinates wallet hold, capture, and credit operations
+- Maintains transaction lifecycle (PENDING → SUCCESS / FAILED)
+- Publishes Kafka events after successful transactions
 
 ## Reward Service
 
--   Kafka consumer for transaction events
--   Calculates and stores reward points
--   Implements idempotency to prevent duplicate rewards
+- Kafka consumer for transaction events
+- Calculates and stores reward points
+- Implements idempotency to prevent duplicate rewards
+- Fully asynchronous and scalable
 
 ## Notification Service
 
--   Kafka consumer for transaction events
--   Generates and stores user notifications
--   Fully asynchronous and decoupled
+- Kafka consumer for transaction events
+- Generates and stores user notifications
+- Fully asynchronous and decoupled from core payment flow
+- Failures do not impact financial transactions
+
 
 ------------------------------------------------------------------------
 
+# Distributed Transaction Flow (Saga)
+
+- Client sends transaction request  
+- API Gateway validates JWT and forwards request  
+- Transaction Service creates transaction with **PENDING** state  
+- Wallet Service places **HOLD** on sender funds  
+- Wallet Service **CAPTURES** hold (debits sender)  
+- Wallet Service **CREDITS** receiver wallet  
+- Transaction Service updates status to **SUCCESS**  
+- Kafka event is published  
+- Reward Service consumes event and creates reward  
+- Notification Service consumes event and creates notification  
+
+
+------------------------------------------------------------------------
+
+# Engineering Highlights
+
+- Distributed transaction management using Saga pattern  
+- Event-driven architecture using Kafka  
+- Stateless authentication using JWT  
+- Idempotent event processing to prevent duplicate execution  
+- Concurrency control using pessimistic locking  
+- Independent databases per service for fault isolation and scalability  
+
+
+------------------------------------------------------------------------
 # Technology Stack
 
-Backend: Java 17, Spring Boot, Spring Security, Spring Cloud Gateway\
-Database: PostgreSQL\
-Messaging: Apache Kafka\
-Caching: Redis\
-Containerization: Docker, Docker Compose
+## Backend
+
+- Java 17  
+- Spring Boot  
+- Spring Security  
+- Spring Cloud Gateway  
+
+## Database
+
+- PostgreSQL  
+
+## Messaging
+
+- Apache Kafka  
+
+## Caching & Rate Limiting
+
+- Redis  
+
+## Containerization
+
+- Docker  
+- Docker Compose  
 
 ------------------------------------------------------------------------
 
