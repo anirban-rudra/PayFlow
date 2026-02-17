@@ -1,199 +1,252 @@
-# PayFlow - Distributed FinTech Payment System
+PayFlow - Distributed FinTech Payment Platform
 
-PayFlow is a PayPal-like distributed payment platform built using Spring Boot microservices architecture. It supports secure wallet-to-wallet transfers, asynchronous transaction processing, rewards, and notifications using an event-driven architecture.
+PayFlow is a distributed payment system built using Spring Boot microservices, Kafka, Redis, and PostgreSQL, enabling secure wallet-to-wallet money transfers. It uses the Saga pattern for distributed transaction consistency and an event-driven architecture for asynchronous reward and notification processing.
 
-This project demonstrates production-grade backend design patterns including distributed transactions, event-driven communication, fault isolation, rate limiting, load balancing, and scalable microservices.
+This project demonstrates real-world backend design patterns used in modern fintech systems like PayPal and Stripe.
 
----
+Architecture Overview
 
-# Architecture Overview
+PayFlow follows a Microservices Architecture, where each service:
 
-The system follows a Microservices Architecture where each service is independently deployable and scalable.
+is independently deployable
 
-Core services:
+owns its own database
 
-- API Gateway - routing, authentication, rate limiting, and load balancing  
-- User Service - user registration and authentication  
-- Wallet Service - balance management and ledger operations  
-- Transaction Service - peer-to-peer payments and transaction orchestration  
-- Reward Service - cashback and reward processing  
-- Notification Service - asynchronous event-driven notifications  
+communicates via REST (synchronous) and Kafka (asynchronous)
 
-Communication patterns:
+ensures scalability, fault isolation, and reliability
 
-- REST APIs - synchronous communication between services  
-- Kafka - asynchronous event-driven communication  
+Core Flow
+Client
+  ↓
+API Gateway (JWT auth, rate limiting)
+  ↓
+Transaction Service (Saga orchestrator)
+  ↓
+Wallet Service (Hold → Capture → Credit)
+  ↓
+Kafka Event Published
+  ├── Reward Service consumes event
+  └── Notification Service consumes event
 
-Each service maintains its own database to ensure loose coupling, scalability, and fault isolation.
+Sequence Diagram
+sequenceDiagram
 
----
+actor Client
+participant Gateway as API Gateway
+participant Txn as Transaction Service
+participant Wallet as Wallet Service
+participant Kafka as Kafka Broker
+participant Reward as Reward Service
+participant Notify as Notification Service
+participant TxnDB as Transaction DB
+participant WalletDB as Wallet DB
+participant RewardDB as Reward DB
+participant NotifyDB as Notification DB
 
-# Architecture Diagram
+Client->>Gateway: POST /transactions (JWT)
+Gateway->>Gateway: Validate JWT
+Gateway->>Txn: Forward request (X-User-Id)
 
-![Architecture](docs/architecture.png)
+Txn->>TxnDB: Save Transaction (PENDING)
 
----
+Txn->>Wallet: Place HOLD (sender funds)
+Wallet->>WalletDB: Lock wallet (PESSIMISTIC_WRITE)
+Wallet->>WalletDB: Create WalletHold
+Wallet-->>Txn: HoldReference
 
-## Core Microservices
+Txn->>Wallet: Capture HOLD
+Wallet->>WalletDB: Deduct balance
+Wallet-->>Txn: Capture Success
 
-### User Service
-**Responsibilities:** Handles user registration, authentication, and identity management.
+Txn->>Wallet: Credit receiver wallet
+Wallet->>WalletDB: Add balance
+Wallet-->>Txn: Credit Success
 
-**Key Features:**
+Txn->>TxnDB: Update Transaction (SUCCESS)
 
-- Stateless authentication using JWT and Spring Security  
-- Secure user registration and login APIs  
-- Integrates with Wallet Service to create wallets for new users  
+Txn->>Kafka: Publish txn-initiated event
 
----
+Kafka-->>Reward: Consume event
+Reward->>RewardDB: Save reward
 
-### Wallet Service (Core Financial Service)
-**Responsibilities:** Manages wallet balances and ensures transactional integrity.
+Kafka-->>Notify: Consume event
+Notify->>NotifyDB: Save notification
 
-**Key Features:**
+Txn-->>Gateway: Return SUCCESS
+Gateway-->>Client: Transaction Complete
 
-- Maintains wallet ledger with available and reserved balances  
-- Supports debit, credit, hold, and release operations  
-- Prevents overdraft using balance validation and hold mechanisms  
-- Ensures ACID-compliant balance updates using transactional persistence  
+Microservices
+API Gateway
 
----
+JWT authentication and validation
 
-### Transaction Service
-**Responsibilities:** Handles peer-to-peer payments and transaction orchestration.
+Request routing to services
 
-**Key Features:**
+Redis-based rate limiting
 
-- Coordinates wallet debit and credit operations  
-- Persists transaction history  
-- Publishes transaction events to Kafka  
-- Ensures reliable transaction processing in distributed environment  
+User Service
 
----
+User registration and login
 
-### Reward Service
-**Responsibilities:** Processes rewards and cashback asynchronously.
+JWT token generation
 
-**Key Features:**
+Creates wallet via Wallet Service
 
-- Kafka consumer for transaction events  
-- Issues rewards based on transaction activity  
-- Idempotent event handling prevents duplicate rewards  
+Wallet Service
 
----
+Wallet creation and balance management
 
-### Notification Service
-**Responsibilities:** Sends transaction notifications asynchronously.
+Credit, debit, hold, capture, and release operations
 
-**Key Features:**
+Uses pessimistic locking to prevent double spending
 
-- Kafka consumer for transaction events  
-- Fully decoupled from transaction processing  
-- Failures do not affect core payment flow  
+Transaction Service
 
----
+Orchestrates distributed transactions using Saga pattern
 
-### API Gateway
-**Responsibilities:** Entry point for all external requests.
+Coordinates wallet hold, capture, and credit
 
-**Key Features:**
+Publishes Kafka events after successful transactions
 
-- Request routing using Spring Cloud Gateway  
-- JWT validation and authentication filtering  
-- Rate limiting using Redis  
-- Load balancing across service instances  
+Reward Service
 
+Kafka consumer for transaction events
 
----
+Calculates and stores reward points
 
-# Installation and Running the Project
+Implements idempotency to prevent duplicate rewards
 
-## Prerequisites
+Notification Service
 
-Ensure the following are installed on your system:
+Kafka consumer for transaction events
 
-- Java 17+
-- Docker
-- Docker Compose
-- Maven
-- IntelliJ IDEA (optional, recommended for development)
+Generates and stores user notifications
 
----
+Fully asynchronous and decoupled
 
-## Step 1 - Clone repository
+Key Design Patterns
 
-```bash
+Microservices Architecture
+
+Saga Pattern (Orchestration + Compensation)
+
+Event-Driven Architecture using Kafka
+
+JWT Stateless Authentication
+
+Idempotent Event Processing
+
+Pessimistic Locking for concurrency control
+
+Technology Stack
+Backend
+
+Java 17
+
+Spring Boot
+
+Spring Security
+
+Spring Cloud Gateway
+
+Database
+
+PostgreSQL
+
+Messaging
+
+Apache Kafka
+
+Caching & Rate Limiting
+
+Redis
+
+Containerization
+
+Docker
+
+Docker Compose
+
+Distributed Transaction Flow
+
+Client sends transaction request
+
+Gateway validates JWT
+
+Transaction Service creates PENDING transaction
+
+Wallet Service places HOLD on sender funds
+
+Wallet Service CAPTURES hold (debit sender)
+
+Wallet Service CREDITS receiver
+
+Transaction marked SUCCESS
+
+Kafka event published
+
+Reward Service and Notification Service process event asynchronously
+
+Getting Started
+Prerequisites
+
+Java 17+
+
+Docker
+
+Docker Compose
+
+Maven
+
+Clone Repository
 git clone https://github.com/anirban-rudra/PayFlow.git
 cd PayFlow
 
-Step 2 - Start infrastructure services
-Start Kafka, Zookeeper, Redis, and databases using Docker Compose:
+Start Infrastructure
 docker-compose up -d
 
-Verify all containers are running:
-docker ps
 
-This will start:
-Kafka (event messaging system)
-Zookeeper (Kafka coordination)
-Redis (rate limiting and caching)
-PostgreSQL/MySQL (databases)
+Starts Kafka, Redis, and PostgreSQL.
 
-Step 3 - Start microservices
-Start each microservice individually.
+Start Services
 
-Option 1 - Using IntelliJ IDEA (recommended)
-Open the project in IntelliJ IDEA.
+Run each service:
 
-Run the following services:
+cd user-service
+./mvnw spring-boot:run
 
-user-service
+
+Repeat for:
+
 wallet-service
 transaction-service
 reward-service
 notification-service
 api-gateway
 
-Option 2 - Using terminal
-Start each service using Maven wrapper.
-
-Example:
-cd user-service
-./mvnw spring-boot:run
-Repeat for the following services:
-
-cd wallet-service
-./mvnw spring-boot:run
-
-cd transaction-service
-./mvnw spring-boot:run
-
-cd reward-service
-./mvnw spring-boot:run
-
-cd notification-service
-./mvnw spring-boot:run
-
-cd api-gateway
-./mvnw spring-boot:run
-
-Step 4 - Access the system
-The API Gateway runs on:
+Access API Gateway
 http://localhost:8080
-All client requests should be sent through the API Gateway.
 
-Step 5 - Verify Redis
-Find Redis container name:
-docker ps
+Key Engineering Highlights
 
-Then run:
-docker exec -it <redis-container-name> redis-cli ping
+Distributed transaction management using Saga pattern
 
-Expected output:
-PONG
+Event-driven architecture using Kafka
 
-Step 6 - Stop services
-Stop all infrastructure services:
+Secure authentication using JWT
 
-docker-compose down
-Stop microservices using IntelliJ or Ctrl+C in terminal.
+Idempotent event processing
+
+Concurrency control using pessimistic locking
+
+Independent databases per service
+
+Author
+
+Anirban Rudra
+Software Engineer - Java Backend
+SAP Fioneer
+
+LinkedIn:
+[https://github.com/anirban-rudra](https://www.linkedin.com/in/anirban-rudra45/)
