@@ -1,4 +1,4 @@
-# PayFlow --- Distributed FinTech Payment Platform
+# PayFlow - Distributed FinTech Payment Platform
 
 PayFlow is a distributed payment system built using Spring Boot
 microservices, Kafka, Redis, and PostgreSQL, enabling secure
