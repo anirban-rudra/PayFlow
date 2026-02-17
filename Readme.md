@@ -15,9 +15,9 @@ modern fintech systems like PayPal and Stripe.
 
 PayFlow follows a Microservices Architecture, where each service:
 
--   is independently deployable\
--   owns its own database\
--   communicates via REST (synchronous) and Kafka (asynchronous)\
+-   is independently deployable
+-   owns its own database
+-   communicates via REST (synchronous) and Kafka (asynchronous)
 -   ensures scalability, fault isolation, and reliability
 
 Core Flow:
@@ -130,10 +130,10 @@ Gateway-->>Client: Transaction Complete
 
 # Technology Stack
 
-Backend: Java 17, Spring Boot, Spring Security, Spring Cloud Gateway
-Database: PostgreSQL
-Messaging: Apache Kafka
-Caching: Redis
+Backend: Java 17, Spring Boot, Spring Security, Spring Cloud Gateway\
+Database: PostgreSQL\
+Messaging: Apache Kafka\
+Caching: Redis\
 Containerization: Docker, Docker Compose
 
 ------------------------------------------------------------------------
@@ -174,8 +174,8 @@ Access API Gateway
 
 # Author
 
-Anirban Rudra
-Software Engineer - Java Backend
+Anirban Rudra\
+Software Engineer - Java Backend\
 SAP Fioneer
 
 LinkedIn: https://www.linkedin.com/in/anirban-rudra45/
