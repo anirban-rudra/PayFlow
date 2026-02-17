@@ -166,7 +166,7 @@ wallet-service\
 transaction-service\
 reward-service\
 notification-service\
-api-gateway\
+api-gateway
 
 Access API Gateway
 
