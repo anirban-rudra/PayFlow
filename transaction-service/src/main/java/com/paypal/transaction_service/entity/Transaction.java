@@ -3,13 +3,21 @@ package com.paypal.transaction_service.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import jakarta.validation.constraints.Positive;
+import java.util.UUID;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 
 
 @Entity
-@Table(name = "transaction")
+@Table(
+        name = "transactions",
+        uniqueConstraints = @UniqueConstraint(name = "uk_transactions_sender_idempotency", columnNames = {"sender_id", "idempotency_key"})
+)
 
 public class Transaction {
 
@@ -17,28 +25,60 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "public_reference", length = 32, unique = true)
+    @Size(max = 32)
+    private String publicReference;
+
+    @Column(name = "sender_id", nullable = false)
+    @NotNull
     private Long senderId;
 
-    @Column(nullable = false)
+    @Column(name = "receiver_id", nullable = false)
+    @NotNull
     private Long receiverId;
 
+    @Column(name = "receiver_pay_tag", length = 40)
+    @Size(max = 40)
+    private String receiverPayTag;
 
-    @Column(nullable = false)
-    @Positive(message = "Amount must be positive")
-    private Double amount;
+    @Column(name = "sender_pay_tag", length = 40)
+    @Size(max = 40)
+    private String senderPayTag;
 
-    @Column(nullable = false)
+    @Column(name = "amount", nullable = false, precision = 19, scale = 2)
+    @NotNull
+    @DecimalMin(value = "0.01", message = "Amount must be positive")
+    @Digits(integer = 17, fraction = 2)
+    private BigDecimal amount;
+
+    @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(nullable = false)
+    @Column(name = "status", nullable = false)
     private String status;
+
+    @Column(name = "hold_reference", length = 128)
+    @Size(max = 128)
+    private String holdReference;
+
+    @Column(name = "idempotency_key", length = 128)
+    @Size(max = 128)
+    private String idempotencyKey;
+
+    @Column(name = "failure_reason", columnDefinition = "TEXT")
+    private String failureReason;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 
     public Transaction() {}
 
     public Transaction(Long senderId, Long receiverId,
                        String senderNameSnapshot, String receiverNameSnapshot,
-                       Double amount, LocalDateTime timestamp, String status) {
+                       BigDecimal amount, LocalDateTime timestamp, String status) {
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.amount = amount;
@@ -51,9 +91,20 @@ public class Transaction {
         if (timestamp == null) {
             timestamp = LocalDateTime.now();
         }
-        if (status == null) {
-            status = "PENDING";
+        if (publicReference == null || publicReference.isBlank()) {
+            publicReference = "PF-TXN-" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase();
         }
+        if (updatedAt == null) {
+            updatedAt = timestamp;
+        }
+        if (status == null) {
+            status = TransactionStatus.CREATED.name();
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     // Getters and setters
@@ -63,6 +114,14 @@ public class Transaction {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getPublicReference() {
+        return publicReference;
+    }
+
+    public void setPublicReference(String publicReference) {
+        this.publicReference = publicReference;
     }
 
     public Long getSenderId() {
@@ -79,10 +138,26 @@ public class Transaction {
         this.receiverId = receiverId;
     }
 
-    public Double getAmount() {
+    public String getReceiverPayTag() {
+        return receiverPayTag;
+    }
+
+    public void setReceiverPayTag(String receiverPayTag) {
+        this.receiverPayTag = receiverPayTag;
+    }
+
+    public String getSenderPayTag() {
+        return senderPayTag;
+    }
+
+    public void setSenderPayTag(String senderPayTag) {
+        this.senderPayTag = senderPayTag;
+    }
+
+    public BigDecimal getAmount() {
         return amount;
     }
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -100,15 +175,63 @@ public class Transaction {
         this.status = status;
     }
 
+    public void setStatus(TransactionStatus status) {
+        this.status = status.name();
+    }
+
+    public String getHoldReference() {
+        return holdReference;
+    }
+
+    public void setHoldReference(String holdReference) {
+        this.holdReference = holdReference;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
+    }
+
+    public String getFailureReason() {
+        return failureReason;
+    }
+
+    public void setFailureReason(String failureReason) {
+        this.failureReason = failureReason;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
     @Override
     public String toString() {
         return "Transaction{" +
                 "id=" + id +
+                ", publicReference='" + publicReference + '\'' +
                 ", senderId=" + senderId +
                 ", receiverId=" + receiverId +
+                ", senderPayTag='" + senderPayTag + '\'' +
+                ", receiverPayTag='" + receiverPayTag + '\'' +
                 ", amount=" + amount +
                 ", timestamp=" + timestamp +
                 ", status='" + status + '\'' +
+                ", holdReference='" + holdReference + '\'' +
                 '}';
     }
 }

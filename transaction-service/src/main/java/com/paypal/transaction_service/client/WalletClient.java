@@ -7,7 +7,7 @@ import com.paypal.transaction_service.dto.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-@FeignClient(name = "wallet-service", url = "http://wallet-service:8088/api/v1/wallets")
+@FeignClient(name = "wallet-service", url = "${app.services.wallet-url}")
 public interface WalletClient {
 
     @PostMapping("/debit")
@@ -23,8 +23,8 @@ public interface WalletClient {
     WalletResponse capture(@RequestBody CaptureRequest request);
 
     @PostMapping("/release/{holdReference}")
-    HoldResponse release(@PathVariable String holdReference);
+    HoldResponse release(@PathVariable("holdReference") String holdReference);
 
     @GetMapping("/{userId}")
-    WalletResponse getWallet(@PathVariable Long userId);
+    WalletResponse getWallet(@PathVariable("userId") Long userId);
 }

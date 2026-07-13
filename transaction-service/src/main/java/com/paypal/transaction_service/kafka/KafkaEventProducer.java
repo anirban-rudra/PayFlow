@@ -5,22 +5,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.paypal.transaction_service.entity.Transaction;
 import org.apache.kafka.clients.producer.RecordMetadata;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class KafkaEventProducer {
 
+    private static final Logger log = LoggerFactory.getLogger(KafkaEventProducer.class);
     private static final String TOPIC = "txn-initiated";
 
     private final KafkaTemplate<String, Transaction> kafkaTemplate;
     private final ObjectMapper objectMapper;
 
-    @Autowired
     public KafkaEventProducer(KafkaTemplate<String, Transaction> kafkaTemplate, ObjectMapper objectMapper) {
         this.kafkaTemplate = kafkaTemplate;
         this.objectMapper = objectMapper;
@@ -28,17 +30,21 @@ public class KafkaEventProducer {
         this.objectMapper.registerModule(new JavaTimeModule());
     }
     public void sendTransactionEvent(String key, Transaction transaction) {
-        System.out.println("📤 Sending to Kafka → Topic: " + TOPIC + ", Key: " + key + ", Message: " + transaction);
+        log.info("Sending transaction {} to Kafka topic {}", transaction.getId(), TOPIC);
 
         CompletableFuture<SendResult<String, Transaction>> future = kafkaTemplate.send(TOPIC, key, transaction);
 
         future.thenAccept(result -> {
             RecordMetadata metadata = result.getRecordMetadata();
-            System.out.println("✅ Kafka message sent successfully! Topic: " + metadata.topic() + ", Partition: " + metadata.partition() + ", Offset: " + metadata.offset());
+            log.info("Kafka message sent: topic={}, partition={}, offset={}",
+                    metadata.topic(), metadata.partition(), metadata.offset());
         }).exceptionally(ex -> {
-            System.err.println("❌ Failed to send Kafka message: " + ex.getMessage());
-            ex.printStackTrace();
+            log.error("Failed to send Kafka message", ex);
             return null;
         });
+    }
+
+    public void sendTransactionEventAndWait(String key, Transaction transaction) throws Exception {
+        kafkaTemplate.send(TOPIC, key, transaction).get(10, TimeUnit.SECONDS);
     }
 }
