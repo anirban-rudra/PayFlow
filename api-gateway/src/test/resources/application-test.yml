@@ -1,0 +1,17 @@
+jwt:
+  secret: test-secret-test-secret-test-secret12
+
+app:
+  security:
+    gateway-request-key: test-gateway-request-key
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+logging:
+  level:
+    root: WARN
+    com.paypal: INFO

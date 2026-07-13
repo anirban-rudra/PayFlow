@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:userdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      auto-startup: false
+  flyway:
+    enabled: false
+  security:
+    user:
+      name: test-user
+      password: test-password
+
+jwt:
+  secret: test-secret-test-secret-test-secret12
+  expiration: 86400000
+
+logging:
+  level:
+    root: WARN
+    com.paypal: INFO
+
+app:
+  security:
+    internal-api-key: test-internal-api-key
+  services:
+    wallet-url: http://localhost:8088/api/v1/wallets
