@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
-  # 🐘 PostgreSQL Databases for Each Service
+  # PostgreSQL databases for each service
   postgres-user:
     image: postgres:15
-    container_name: postgres-user
+    container_name: payflow-postgres-user
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: userdb
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_user_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
@@ -19,13 +17,13 @@ services:
 
   postgres-wallet:
     image: postgres:15
-    container_name: postgres-wallet
+    container_name: payflow-postgres-wallet
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: walletdb
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - postgres_wallet_data:/var/lib/postgresql/data
     networks:
@@ -33,13 +31,13 @@ services:
 
   postgres-transaction:
     image: postgres:15
-    container_name: postgres-transaction
+    container_name: payflow-postgres-transaction
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: transactiondb
     ports:
-      - "5434:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - postgres_transaction_data:/var/lib/postgresql/data
     networks:
@@ -47,13 +45,13 @@ services:
 
   postgres-reward:
     image: postgres:15
-    container_name: postgres-reward
+    container_name: payflow-postgres-reward
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: rewarddb
     ports:
-      - "5435:5432"
+      - "127.0.0.1:5435:5432"
     volumes:
       - postgres_reward_data:/var/lib/postgresql/data
     networks:
@@ -61,29 +59,29 @@ services:
 
   postgres-notification:
     image: postgres:15
-    container_name: postgres-notification
+    container_name: payflow-postgres-notification
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: notificationdb
     ports:
-      - "5436:5432"
+      - "127.0.0.1:5436:5432"
     volumes:
       - postgres_notification_data:/var/lib/postgresql/data
     networks:
       - payflow-net
 
-  # 🧭 pgAdmin UI for Postgres
+  # pgAdmin UI for Postgres
   pgadmin:
     image: dpage/pgadmin4
-    container_name: pgadmin
+    container_name: payflow-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PGADMIN_DEFAULT_PASSWORD is required}
       PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "False"
       PGADMIN_CONFIG_CSRF_PROTECTION: "False"
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     depends_on:
       - postgres-user
       - postgres-wallet
@@ -93,26 +91,26 @@ services:
     networks:
       - payflow-net
 
-  # 🦍 Zookeeper for Kafka
+  # Zookeeper for Kafka
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.1
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
+    container_name: payflow-zookeeper
+    expose:
+      - "2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     networks:
       - payflow-net
 
-  # ⚡ Kafka Broker
-  # ⚡ Kafka Broker
+  # Kafka broker
   kafka:
     image: confluentinc/cp-kafka:7.4.1
-    container_name: kafka
+    container_name: payflow-kafka
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - "127.0.0.1:29092:29092"
+    expose:
+      - "9092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -129,124 +127,153 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: payflow-redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     networks:
       - payflow-net
 
-  # 🧩 User Service
+  # User service
   user-service:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: user-service
-    ports:
-      - "8081:8081"
+    container_name: payflow-user-service
+    expose:
+      - "8081"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/userdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
     depends_on:
       - postgres-user
       - kafka
     networks:
       - payflow-net
 
-  # 💰 Wallet Service
+  # Wallet service
   wallet-service:
     build:
       context: ./wallet-service
       dockerfile: Dockerfile
-    container_name: wallet-service
-    ports:
-      - "8088:8088"
+    container_name: payflow-wallet-service
+    expose:
+      - "8088"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-wallet:5432/walletdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
     depends_on:
       - postgres-wallet
       - kafka
     networks:
       - payflow-net
 
-  # 🔄 Transaction Service
+  # Transaction service
   transaction-service:
     build:
       context: ./transaction-service
       dockerfile: Dockerfile
-    container_name: transaction-service
-    ports:
-      - "8082:8082"
+    container_name: payflow-transaction-service
+    expose:
+      - "8082"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-transaction:5432/transactiondb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      WALLET_SERVICE_URL: http://wallet-service:8088/api/v1/wallets
+      USER_SERVICE_URL: http://user-service:8081/api/users
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:?INTERNAL_API_KEY is required}
+      GATEWAY_REQUEST_KEY: ${GATEWAY_REQUEST_KEY:?GATEWAY_REQUEST_KEY is required}
     depends_on:
       - postgres-transaction
       - kafka
     networks:
       - payflow-net
 
-  # 🎁 Reward Service
+  # Reward service
   reward-service:
     build:
       context: ./reward-service
       dockerfile: Dockerfile
-    container_name: reward-service
-    ports:
-      - "8083:8083"
+    container_name: payflow-reward-service
+    expose:
+      - "8083"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-reward:5432/rewarddb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      REWARD_POINTS_RATE: ${REWARD_POINTS_RATE:-0.05}
+      REWARD_MINIMUM_AMOUNT: ${REWARD_MINIMUM_AMOUNT:-5.00}
+      KAFKA_RETRY_INTERVAL_MS: ${KAFKA_RETRY_INTERVAL_MS:-1000}
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:-3}
     depends_on:
       - postgres-reward
       - kafka
     networks:
       - payflow-net
 
-  # 📧 Notification Service
+  # Notification service
   notification-service:
     build:
       context: ./notification-service
       dockerfile: Dockerfile
-    container_name: notification-service
-    ports:
-      - "8084:8084"
+    container_name: payflow-notification-service
+    expose:
+      - "8084"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-notification:5432/notificationdb
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_RETRY_INTERVAL_MS: ${KAFKA_RETRY_INTERVAL_MS:-1000}
+      KAFKA_RETRY_MAX_ATTEMPTS: ${KAFKA_RETRY_MAX_ATTEMPTS:-3}
     depends_on:
       - postgres-notification
       - kafka
     networks:
       - payflow-net
 
-  # 🌐 API Gateway
+  # API Gateway
   api-gateway:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
-    container_name: api-gateway
+    container_name: payflow-api-gateway
     ports:
       - "8080:8080"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_DATA_REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      GATEWAY_REQUEST_KEY: ${GATEWAY_REQUEST_KEY:?GATEWAY_REQUEST_KEY is required}
+      FRONTEND_ALLOWED_ORIGINS: ${FRONTEND_ALLOWED_ORIGINS:-http://localhost:3000}
     depends_on:
       - kafka
+    networks:
+      - payflow-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: payflow-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
     networks:
       - payflow-net
 
