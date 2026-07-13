@@ -75,4 +75,3 @@ The service listens on `8088`.
 - [Root README](../Readme.md)
 - [Design Document](../docs/DESIGN.md)
 - [Transaction Service](../transaction-service/README.md)
-

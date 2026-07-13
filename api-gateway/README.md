@@ -55,4 +55,3 @@ The service listens on `8080`.
 
 - [Root README](../Readme.md)
 - [Design Document](../docs/DESIGN.md)
-

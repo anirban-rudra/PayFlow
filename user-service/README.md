@@ -69,4 +69,3 @@ The service listens on `8081`.
 - [Root README](../Readme.md)
 - [Design Document](../docs/DESIGN.md)
 - [Wallet Service](../wallet-service/README.md)
-

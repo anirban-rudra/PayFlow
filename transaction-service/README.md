@@ -85,4 +85,3 @@ The service listens on `8082`.
 - [Design Document](../docs/DESIGN.md)
 - [Wallet Service](../wallet-service/README.md)
 - [User Service](../user-service/README.md)
-
