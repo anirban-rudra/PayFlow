@@ -4,6 +4,7 @@ import com.paypal.user_service.client.WalletClient;
 import com.paypal.user_service.dto.CreateWalletRequest;
 import com.paypal.user_service.entity.User;
 import com.paypal.user_service.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 
@@ -13,7 +14,7 @@ import java.util.Optional;
 @Service
 public class UserServiceImpl implements UserService{
 
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
     private final WalletClient walletClient;
 
     public UserServiceImpl(UserRepository userRepository, WalletClient walletClient){
@@ -24,6 +25,7 @@ public class UserServiceImpl implements UserService{
 
 
     @Override
+    @Transactional
     public User createUser(User user) {
         User savedUser = userRepository.save(user);
         try {
@@ -32,8 +34,7 @@ public class UserServiceImpl implements UserService{
             request.setCurrency("INR");
             walletClient.createWallet(request);
         } catch (Exception ex) {
-            userRepository.deleteById(savedUser.getId()); // rollback
-            throw new RuntimeException("Wallet creation failed, user rolled back", ex);
+            throw new IllegalStateException("Wallet creation failed, user rolled back", ex);
         }
         return savedUser;
     }

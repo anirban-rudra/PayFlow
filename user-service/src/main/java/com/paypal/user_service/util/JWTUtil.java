@@ -2,29 +2,39 @@ package com.paypal.user_service.util;
 
 
 import io.jsonwebtoken.JwtException;
-import org.springframework.beans.factory.annotation.Value;  // ✅ correct
-
-import org.springframework.stereotype.Component;
-
-import java.security.Key;
-import io.jsonwebtoken.security.Keys;
-
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-
+import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 public class JWTUtil {
-    private static final String SECRET = "secret123secret123secret123secret12";
+    private final String secret;
+    private final long expirationMs;
+
+    public JWTUtil(@Value("${jwt.secret}") String secret,
+                   @Value("${jwt.expiration:86400000}") long expirationMs) {
+        this.secret = secret;
+        this.expirationMs = expirationMs;
+    }
+
+    @PostConstruct
+    void validateConfiguration() {
+        if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("jwt.secret must be at least 32 bytes for HS256");
+        }
+    }
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public boolean validateToken(String token, String username) {
@@ -64,7 +74,7 @@ public class JWTUtil {
                 .setClaims(claims)
                 .setSubject(email) // Still keeping email as subject for backward compatibility
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 day
+                .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }

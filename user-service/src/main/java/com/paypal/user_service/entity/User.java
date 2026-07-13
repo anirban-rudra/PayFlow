@@ -9,12 +9,19 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
+
+    @Column(name = "pay_tag", nullable = false, unique = true, length = 40)
+    private String payTag;
+
+    @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
     private String role;
 
 
@@ -50,6 +57,14 @@ public class User {
         return email;
     }
 
+    public String getPayTag() {
+        return payTag;
+    }
+
+    public void setPayTag(String payTag) {
+        this.payTag = payTag;
+    }
+
     public String getPassword() {
         return password;
     }
@@ -60,4 +75,3 @@ public class User {
 
     //getter setters
 }
-
