@@ -1,37 +1,32 @@
 package com.paypal.reward_service.entity;
 
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Transaction {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private Long senderId;
 
-    @Column(nullable = false)
     private Long receiverId;
 
 
-    @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 
-    @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(nullable = false)
     private String status;
 
     public Transaction() {}
 
     public Transaction(Long senderId, Long receiverId,
                        String senderNameSnapshot, String receiverNameSnapshot,
-                       Double amount, LocalDateTime timestamp, String status) {
+                       BigDecimal amount, LocalDateTime timestamp, String status) {
         this.senderId = senderId;
         this.receiverId = receiverId;
         this.amount = amount;
@@ -39,17 +34,6 @@ public class Transaction {
         this.status = status;
     }
 
-    @PrePersist
-    public void prePersist() {
-        if (timestamp == null) {
-            timestamp = LocalDateTime.now();
-        }
-        if (status == null) {
-            status = "PENDING";
-        }
-    }
-
-    // Getters and setters
     public Long getId() {
         return id;
     }
@@ -72,10 +56,10 @@ public class Transaction {
         this.receiverId = receiverId;
     }
 
-    public Double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -105,4 +89,3 @@ public class Transaction {
                 '}';
     }
 }
-
