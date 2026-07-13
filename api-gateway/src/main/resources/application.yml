@@ -6,77 +6,88 @@ spring:
     name: api-gateway-service
 
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
   cloud:
-    gateway:
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-      routes:
-        # User Service - Authentication endpoints (no rate limiting)
-        - id: user-service-auth
-          uri: http://user-service:8081
-          predicates:
-            - Path=/auth/**
-
-        # User Service - API endpoints
-        - id: user-service-api
-          uri: http://user-service:8081
-          predicates:
-            - Path=/api/users/**
-
-        # Wallet Service
-        - id: wallet-service
-          uri: http://wallet-service:8088
-          predicates:
-            - Path=/api/wallets/**
-
-        # Transaction Service - WITH rate limiting
-        - id: transaction-service
-          uri: http://transaction-service:8082
-          predicates:
-            - Path=/api/transactions/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
-
-        # Reward Service - WITH rate limiting
-        - id: reward-service
-          uri: http://reward-service:8083
-          predicates:
-            - Path=/api/rewards/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
-
-        # Notification Service - WITH rate limiting
-        - id: notification-service
-          uri: http://notification-service:8084
-          predicates:
-            - Path=/api/notifications/**
-          filters:
-            - name: RequestRateLimiter
-              args:
-                redis-rate-limiter.replenishRate: 10
-                redis-rate-limiter.burstCapacity: 20
-                redis-rate-limiter.requestedTokens: 1
-
-    httpclient:
-      max-initial-line-length: 4096
-      max-header-size: 8192
-
     compatibility-verifier:
       enabled: false
+    gateway:
+      server:
+        webflux:
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+          routes:
+            # User Service - Authentication endpoints (no rate limiting)
+            - id: user-service-auth
+              uri: ${USER_SERVICE_URL:http://user-service:8081}
+              predicates:
+                - Path=/auth/**
+
+            # User Service - API endpoints
+            - id: user-service-api
+              uri: ${USER_SERVICE_URL:http://user-service:8081}
+              predicates:
+                - Path=/api/users/**
+
+            # Wallet Service
+            - id: wallet-service-v1
+              uri: ${WALLET_SERVICE_URL:http://wallet-service:8088}
+              predicates:
+                - Path=/api/v1/wallets/**
+
+            - id: wallet-service-legacy
+              uri: ${WALLET_SERVICE_URL:http://wallet-service:8088}
+              predicates:
+                - Path=/api/wallets/**
+              filters:
+                - RewritePath=/api/wallets/?(?<segment>.*), /api/v1/wallets/$\{segment}
+
+            # Transaction Service - WITH rate limiting
+            - id: transaction-service
+              uri: ${TRANSACTION_SERVICE_URL:http://transaction-service:8082}
+              predicates:
+                - Path=/api/transactions/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.requestedTokens: 1
+
+            # Reward Service - WITH rate limiting
+            - id: reward-service
+              uri: ${REWARD_SERVICE_URL:http://reward-service:8083}
+              predicates:
+                - Path=/api/rewards/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.requestedTokens: 1
+
+            # Notification Service - WITH rate limiting
+            - id: notification-service
+              uri: ${NOTIFICATION_SERVICE_URL:http://notification-service:8084}
+              predicates:
+                - Path=/api/notifications/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.requestedTokens: 1
+
+          httpclient:
+            max-initial-line-length: 4096
+            max-header-size: 8192
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+
+jwt:
+  secret: ${JWT_SECRET}
 
 # Rate Limiting Configuration
 resilience4j:
@@ -100,5 +111,22 @@ resilience4j:
 
 logging:
   level:
-    org.springframework.cloud.gateway: DEBUG
-    reactor.netty: DEBUG
+    org.springframework.cloud.gateway: ${GATEWAY_LOG_LEVEL:INFO}
+    reactor.netty: ${REACTOR_NETTY_LOG_LEVEL:INFO}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:never}
+
+app:
+  security:
+    gateway-request-key: ${GATEWAY_REQUEST_KEY}
+  cors:
+    allowed-origins: ${FRONTEND_ALLOWED_ORIGINS:http://localhost:3000}

@@ -1,1 +1,7 @@
 .idea/
+.env
+target/
+frontend/node_modules/
+frontend/dist/
+frontend/*.tsbuildinfo
+.payflow/

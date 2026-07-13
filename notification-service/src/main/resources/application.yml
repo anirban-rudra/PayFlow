@@ -6,22 +6,25 @@ spring:
     name: notification-service
 
   datasource:
-    url: jdbc:postgresql://postgres-notification:5432/notificationdb
-    username: postgres
-    password: password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5436/notificationdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
     driver-class-name: org.postgresql.Driver
 
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:validate}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       group-id: notification-group
       auto-offset-reset: earliest
@@ -45,13 +48,28 @@ spring:
 
 logging:
   level:
-    com.paypal.notification_service: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.springframework.kafka: DEBUG
-    org.springframework.mail: DEBUG
+    com.paypal.notification_service: ${APP_LOG_LEVEL:INFO}
+    org.hibernate.SQL: ${HIBERNATE_SQL_LOG_LEVEL:WARN}
+    org.springframework.kafka: ${KAFKA_LOG_LEVEL:INFO}
+    org.springframework.mail: ${MAIL_LOG_LEVEL:INFO}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: ${MANAGEMENT_HEALTH_SHOW_DETAILS:never}
 
 # Notification settings
 app:
+  kafka:
+    retry:
+      interval-ms: ${KAFKA_RETRY_INTERVAL_MS:1000}
+      max-attempts: ${KAFKA_RETRY_MAX_ATTEMPTS:3}
   notification:
     email:
       enabled: true

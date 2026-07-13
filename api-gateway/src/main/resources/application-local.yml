@@ -1,0 +1,65 @@
+jwt:
+  secret: ${JWT_SECRET}
+
+USER_SERVICE_URL: http://localhost:8081
+WALLET_SERVICE_URL: http://localhost:8088
+TRANSACTION_SERVICE_URL: http://localhost:8082
+REWARD_SERVICE_URL: http://localhost:8083
+NOTIFICATION_SERVICE_URL: http://localhost:8084
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-service-auth
+              uri: http://localhost:8081
+              predicates:
+                - Path=/auth/**
+            - id: user-service-api
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/users/**
+            - id: wallet-service-v1
+              uri: http://localhost:8088
+              predicates:
+                - Path=/api/v1/wallets/**
+            - id: wallet-service-legacy
+              uri: http://localhost:8088
+              predicates:
+                - Path=/api/wallets/**
+              filters:
+                - RewritePath=/api/wallets/?(?<segment>.*), /api/v1/wallets/$\{segment}
+            - id: transaction-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/transactions/**
+            - id: reward-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/rewards/**
+            - id: notification-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/notifications/**
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+management:
+  health:
+    redis:
+      enabled: false
+
+app:
+  security:
+    gateway-request-key: ${GATEWAY_REQUEST_KEY}
+  cors:
+    allowed-origins: http://localhost:3000
+
+logging:
+  level:
+    root: WARN
+    com.paypal: INFO
