@@ -1,27 +1,30 @@
 package com.paypal.wallet_service.entity;
 
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "wallets")
+@Table(name = "wallets", indexes = {
+        @Index(name = "idx_wallets_user_id", columnList = "user_id")
+})
 public class Wallet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "user_id", nullable = false, unique = true)
     private Long userId;
 
     @Column(nullable = false, length = 3)
     private String currency = "INR";
 
-    @Column(nullable = false)
-    private Long balance = 0L;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal balance = BigDecimal.ZERO;
 
-    @Column(nullable = false)
-    private Long availableBalance = 0L;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal availableBalance = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -35,9 +38,14 @@ public class Wallet {
     public Wallet(Long userId, String currency) {
         this.userId = userId;
         this.currency = currency;
-        this.balance = 0L;
-        this.availableBalance = 0L;
+        this.balance = BigDecimal.ZERO;
+        this.availableBalance = BigDecimal.ZERO;
         this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -51,11 +59,11 @@ public class Wallet {
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
 
-    public Long getBalance() { return balance; }
-    public void setBalance(Long balance) { this.balance = balance; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 
-    public Long getAvailableBalance() { return availableBalance; }
-    public void setAvailableBalance(Long availableBalance) { this.availableBalance = availableBalance; }
+    public BigDecimal getAvailableBalance() { return availableBalance; }
+    public void setAvailableBalance(BigDecimal availableBalance) { this.availableBalance = availableBalance; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

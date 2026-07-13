@@ -3,6 +3,8 @@ package com.paypal.wallet_service.scheduler;
 import com.paypal.wallet_service.entity.WalletHold;
 import com.paypal.wallet_service.repository.WalletHoldRepository;
 import com.paypal.wallet_service.service.WalletService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +13,8 @@ import java.util.List;
 
 @Component
 public class HoldExpiryScheduler {
+
+    private static final Logger log = LoggerFactory.getLogger(HoldExpiryScheduler.class);
 
     private final WalletHoldRepository walletHoldRepository;
     private final WalletService walletService;
@@ -34,10 +38,10 @@ public class HoldExpiryScheduler {
             try {
                 // reuse existing release logic (locks, audit, idempotency)
                 walletService.releaseHold(ref);
-                System.out.println("🔄 Expired hold released: " + ref);
+                log.info("Expired wallet hold released");
             } catch (Exception e) {
                 // log and continue - don't block the sweep
-                System.err.println("❌ Failed to release expired hold " + ref + ": " + e.getMessage());
+                log.error("Failed to release expired wallet hold", e);
             }
         }
     }

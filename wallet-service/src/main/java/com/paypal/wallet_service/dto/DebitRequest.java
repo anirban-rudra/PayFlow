@@ -1,9 +1,18 @@
 package com.paypal.wallet_service.dto;
 
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
+
 public class DebitRequest {
     private Long userId;
     private String currency;
-    private Long amount;
+    @NotNull
+    @DecimalMin(value = "0.01", message = "Amount must be positive")
+    @Digits(integer = 17, fraction = 2)
+    private BigDecimal amount;
 
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
@@ -11,6 +20,6 @@ public class DebitRequest {
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
 
-    public Long getAmount() { return amount; }
-    public void setAmount(Long amount) { this.amount = amount; }
+    public BigDecimal getAmount() { return amount; }
+    public void setAmount(BigDecimal amount) { this.amount = amount; }
 }

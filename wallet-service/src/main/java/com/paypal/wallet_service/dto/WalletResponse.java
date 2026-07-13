@@ -1,17 +1,19 @@
 package com.paypal.wallet_service.dto;
 
+import java.math.BigDecimal;
+
 public class WalletResponse {
     private Long id;
     private Long userId;
     private String currency;
-    private Long balance;
-    private Long availableBalance;
+    private BigDecimal balance;
+    private BigDecimal availableBalance;
 
     // ✅ No-args constructor (Jackson needs this)
     public WalletResponse() {}
 
     // All-args constructor (optional, for convenience)
-    public WalletResponse(Long id, Long userId, String currency, Long balance, Long availableBalance) {
+    public WalletResponse(Long id, Long userId, String currency, BigDecimal balance, BigDecimal availableBalance) {
         this.id = id;
         this.userId = userId;
         this.currency = currency;
@@ -29,9 +31,9 @@ public class WalletResponse {
     public String getCurrency() { return currency; }
     public void setCurrency(String currency) { this.currency = currency; }
 
-    public Long getBalance() { return balance; }
-    public void setBalance(Long balance) { this.balance = balance; }
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
 
-    public Long getAvailableBalance() { return availableBalance; }
-    public void setAvailableBalance(Long availableBalance) { this.availableBalance = availableBalance; }
+    public BigDecimal getAvailableBalance() { return availableBalance; }
+    public void setAvailableBalance(BigDecimal availableBalance) { this.availableBalance = availableBalance; }
 }
