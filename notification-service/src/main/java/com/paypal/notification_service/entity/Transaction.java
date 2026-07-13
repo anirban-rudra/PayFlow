@@ -1,55 +1,35 @@
 package com.paypal.notification_service.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Positive;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-
-@Entity
-@Table(name = "transaction")
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Transaction {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private Long senderId;
 
-    @Column(nullable = false)
     private Long receiverId;
 
+    private String receiverPayTag;
 
-    @Column(nullable = false)
-    @Positive(message = "Amount must be positive")
-    private Double amount;
+    private BigDecimal amount;
 
-    @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(nullable = false)
     private String status;
 
     public Transaction() {}
 
-
-
-    @PrePersist
-    public void prePersist() {
-        if (timestamp == null) {
-            timestamp = LocalDateTime.now();
-        }
-        if (status == null) {
-            status = "PENDING";
-        }
-    }
-
-    // Getters and setters
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Long getSenderId() {
@@ -66,10 +46,18 @@ public class Transaction {
         this.receiverId = receiverId;
     }
 
-    public Double getAmount() {
+    public String getReceiverPayTag() {
+        return receiverPayTag;
+    }
+
+    public void setReceiverPayTag(String receiverPayTag) {
+        this.receiverPayTag = receiverPayTag;
+    }
+
+    public BigDecimal getAmount() {
         return amount;
     }
-    public void setAmount(Double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 

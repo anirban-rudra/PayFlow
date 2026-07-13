@@ -12,9 +12,17 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private Long userId;
+
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
+
+    @Column(nullable = false)
     private LocalDateTime sentAt;
+
+    @Column
+    private LocalDateTime readAt;
 
     // Default constructor
     public Notification() {
@@ -59,5 +67,17 @@ public class Notification {
 
     public void setSentAt(LocalDateTime sentAt) {
         this.sentAt = sentAt;
+    }
+
+    public LocalDateTime getReadAt() {
+        return readAt;
+    }
+
+    public void setReadAt(LocalDateTime readAt) {
+        this.readAt = readAt;
+    }
+
+    public boolean isRead() {
+        return readAt != null;
     }
 }

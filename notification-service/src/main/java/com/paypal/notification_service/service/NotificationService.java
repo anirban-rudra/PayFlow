@@ -7,6 +7,6 @@ import java.util.List;
 public interface NotificationService {
     Notification sendNotification(Notification notification);
     List<Notification> getNotificationsByUserId(Long userId);
+    int markNotificationsRead(Long userId);
 
 }
-
